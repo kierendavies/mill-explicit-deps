@@ -7,9 +7,27 @@ import mill.scalalib.api.ZincWorkerUtil
 import mill.scalalib.publish._
 import mill.scalalib.scalafmt.ScalafmtModule
 
-val millVersions = Seq("0.10.0")
+case class Versions(
+    mill: String,
+    zinc: String,
+)
 
-object `mill-explicit-deps` extends Cross[MillExplicitDepsModule](millVersions: _*)
+object Versions {
+  val forMill = Map(
+    "0.9.12" -> Versions(
+      mill = "0.9.12",
+      zinc = "1.5.5",
+    ),
+    "0.10.0" -> Versions(
+      mill = "0.10.0",
+      zinc = "1.5.9",
+    ),
+  )
+
+  val millCross = forMill.keys.toSeq.sorted
+}
+
+object `mill-explicit-deps` extends Cross[MillExplicitDepsModule](Versions.millCross: _*)
 class MillExplicitDepsModule(millVersion: String)
     extends CrossScalaModule
     with PublishModule
@@ -20,13 +38,20 @@ class MillExplicitDepsModule(millVersion: String)
   def millBinaryVersion = ZincWorkerUtil.scalaNativeBinaryVersion(millVersion)
   def artifactSuffix = s"_mill${millBinaryVersion}" + super.artifactSuffix()
 
-  val sbtVersion = Versions.zinc
+  override def sources = T.sources {
+    PathRef(millSourcePath / s"src") +:
+      ZincWorkerUtil.matchingVersions(millVersion).map { v =>
+        PathRef(millSourcePath / s"src-$v")
+      }
+  }
+
   // It is arguably "cheating" not to declare all dependencies explicitly here,
   // but then we would have to deal with figuring out all the right dependency
   // versions for the given version of Mill.
+  val v = Versions.forMill(millVersion)
   def ivyDeps = Agg(
-    ivy"com.lihaoyi::mill-scalalib:$millVersion",
-    ivy"org.scala-sbt::zinc-persist:$sbtVersion",
+    ivy"com.lihaoyi::mill-scalalib:${v.mill}",
+    ivy"org.scala-sbt::zinc-persist:${v.zinc}",
   )
 
   def publishVersion = "0.1.0"

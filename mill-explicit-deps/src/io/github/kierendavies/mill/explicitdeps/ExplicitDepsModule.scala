@@ -1,4 +1,4 @@
-package io.github.kierendavies.mill
+package io.github.kierendavies.mill.explicitdeps
 
 import scala.xml.XML
 
@@ -14,16 +14,14 @@ import mill.T
 import mill.api.Result
 import mill.define.Command
 import mill.define.Target
-import mill.define.Task
 import mill.scalalib.CrossVersion
 import mill.scalalib.Dep
 import mill.scalalib.ScalaModule
-import mill.scalalib.api.ZincWorkerUtil
 import sbt.internal.inc.Analysis
 import sbt.internal.inc.FileAnalysisStore
 import xsbti.VirtualFileRef
 
-trait ExplicitDepsModule extends ScalaModule {
+trait ExplicitDepsModule extends ScalaModule with ExplicitDepsPlatform {
 
   def declaredIvyDeps: Target[Agg[Dep]] = T {
     ivyDeps() ++ compileIvyDeps()
@@ -100,13 +98,8 @@ trait ExplicitDepsModule extends ScalaModule {
     }
   }
 
-  def ignoreUndeclaredIvyDeps: Task[Dep => Boolean] = T.task { dep: Dep =>
-    val canonical = (depCanonical _).tupled(scalaVersionsAndPlatform())
-    mandatoryIvyDepsCanonical().contains(canonical(dep))
-  }
-
   def undeclaredIvyDeps: Target[Agg[Dep]] = T {
-    val canonical = (depCanonical _).tupled(scalaVersionsAndPlatform())
+    val canonical = (DepC.apply _).tupled(scalaVersionsAndPlatform())
 
     val declaredC = declaredIvyDeps().map(canonical)
 
@@ -119,7 +112,7 @@ trait ExplicitDepsModule extends ScalaModule {
   }
 
   def unimportedIvyDeps: Target[Agg[Dep]] = T {
-    val canonical = (depCanonical _).tupled(scalaVersionsAndPlatform())
+    val canonical = (DepC.apply _).tupled(scalaVersionsAndPlatform())
 
     val importedC = importedIvyDeps().map(canonical)
 
@@ -158,39 +151,6 @@ trait ExplicitDepsModule extends ScalaModule {
       T.log.info("All dependencies are explicit")
       Result.Success(())
     }
-  }
-
-  // For convenient currying.
-  private def scalaVersionsAndPlatform: Task[(String, String, String)] = T.task {
-    val scalaV = scalaVersion()
-    val scalaBinV = ZincWorkerUtil.scalaBinaryVersion(scalaV)
-    val platform = platformSuffix()
-    (scalaBinV, scalaV, platform)
-  }
-
-  private type DepC = (String, String)
-
-  // Equality on coursier.Dependency is by reference. We need to construct some
-  // sort of well-behaved canonical representation.
-  private def depCanonical(
-      binaryVersion: String,
-      fullVersion: String,
-      platformSuffix: String,
-  )(dep: Dep): DepC = {
-    val module = dep
-      .toDependency(
-        binaryVersion,
-        fullVersion,
-        platformSuffix,
-      )
-      .module
-
-    (module.organization.value, module.name.value)
-  }
-
-  private def mandatoryIvyDepsCanonical: Task[Agg[DepC]] = T.task {
-    val canonical = (depCanonical _).tupled(scalaVersionsAndPlatform())
-    mandatoryIvyDeps().map(canonical)
   }
 
   private def pomPath(jar: os.Path): os.Path =
