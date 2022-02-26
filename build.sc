@@ -76,7 +76,11 @@ class MillExplicitDepsModule(millPlatform: String)
     ivy"org.scala-sbt::zinc-persist:${crossConfig.zincVersion}",
   )
 
-  def publishVersion = VcsVersion.vcsState().format()
+  def publishVersion = VcsVersion
+    .vcsState()
+    .format(
+      tagModifier = _.stripPrefix("v")
+    )
   def pomSettings = PomSettings(
     description = "Mill plugin for enforcing explicit dependencies",
     organization = "io.github.kierendavies",
