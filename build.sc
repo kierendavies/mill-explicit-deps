@@ -1,7 +1,9 @@
 import $ivy.`de.tototec::de.tobiasroeser.mill.integrationtest::0.4.1-35-8464cc`
+import $ivy.`de.tototec::de.tobiasroeser.mill.vcs.version::0.1.4`
 import $ivy.`io.github.davidgregory084::mill-tpolecat::0.3.0`
 
 import de.tobiasroeser.mill.integrationtest._
+import de.tobiasroeser.mill.vcs.version.VcsVersion
 import io.github.davidgregory084.TpolecatModule
 import mill._
 import mill.scalalib._
@@ -74,7 +76,7 @@ class MillExplicitDepsModule(millPlatform: String)
     ivy"org.scala-sbt::zinc-persist:${crossConfig.zincVersion}",
   )
 
-  def publishVersion = "0.1.0"
+  def publishVersion = VcsVersion.vcsState().format()
   def pomSettings = PomSettings(
     description = "Mill plugin for enforcing explicit dependencies",
     organization = "io.github.kierendavies",
