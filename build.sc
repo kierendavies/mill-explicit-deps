@@ -1,5 +1,7 @@
+import $ivy.`de.tototec::de.tobiasroeser.mill.integrationtest::0.4.1-35-8464cc`
 import $ivy.`io.github.davidgregory084::mill-tpolecat::0.3.0`
 
+import de.tobiasroeser.mill.integrationtest._
 import io.github.davidgregory084.TpolecatModule
 import mill._
 import mill.scalalib._
@@ -7,51 +9,69 @@ import mill.scalalib.api.ZincWorkerUtil
 import mill.scalalib.publish._
 import mill.scalalib.scalafmt.ScalafmtModule
 
-case class Versions(
-    mill: String,
-    zinc: String,
-)
+val SemVer = raw"(\d+)\.(\d+)\.(\d+)(-.*)?".r
 
-object Versions {
-  val forMill = Map(
-    "0.9.12" -> Versions(
-      mill = "0.9.12",
-      zinc = "1.5.5",
-    ),
-    "0.10.0" -> Versions(
-      mill = "0.10.0",
-      zinc = "1.5.9",
-    ),
-  )
-
-  val millCross = forMill.keys.toSeq.sorted
+def millPlatform(millVersion: String): String = millVersion match {
+  case SemVer("0", minor, _, _) => s"0.$minor"
 }
 
-object `mill-explicit-deps` extends Cross[MillExplicitDepsModule](Versions.millCross: _*)
-class MillExplicitDepsModule(millVersion: String)
+trait CrossConfig {
+  def millVersion: String
+  def zincVersion: String
+
+  def scalaVersion: String = "2.13.8"
+  def millTestVersions: Seq[String] = Seq(millVersion)
+  def scalaTestVersions: Seq[String] = Seq("2.12.15", "2.13.8", "3.0.2", "3.1.1")
+  def itestCrossMatrix: Seq[(String, String)] = for {
+    m <- millTestVersions
+    s <- scalaTestVersions
+  } yield (m, s)
+}
+
+val crossConfigs = Seq(
+  new CrossConfig {
+    def millVersion = "0.10.0"
+    def zincVersion = "1.5.9"
+  },
+  new CrossConfig {
+    // Mill <0.9.5 uses Zinc 1.4.0-M1 which fails to read the analysis file.
+    def millVersion = "0.9.5"
+    def zincVersion = "1.4.4"
+    override def millTestVersions = (5 to 12).map(patch => s"0.9.$patch")
+    // Mill <0.9.7 doesn't resolve Scala 3 dependencies correctly.
+    override def itestCrossMatrix = super.itestCrossMatrix.filter {
+      case (SemVer(_, _, patch, _), SemVer("3", _, _, _)) => patch.toInt >= 7
+      case _ => true
+    }
+  },
+).map(c => millPlatform(c.millVersion) -> c).toMap
+
+val crossMillVersions = crossConfigs.keys.toSeq
+
+object `mill-explicit-deps` extends Cross[MillExplicitDepsModule](crossMillVersions: _*)
+class MillExplicitDepsModule(millPlatform: String)
     extends CrossScalaModule
     with PublishModule
     with ScalafmtModule
     with TpolecatModule {
 
-  def crossScalaVersion = "2.13.8"
-  def millBinaryVersion = ZincWorkerUtil.scalaNativeBinaryVersion(millVersion)
-  def artifactSuffix = s"_mill${millBinaryVersion}" + super.artifactSuffix()
+  val crossConfig = crossConfigs(millPlatform)
+  def crossScalaVersion = crossConfig.scalaVersion
+  def artifactSuffix = s"_mill${millPlatform}" + super.artifactSuffix()
 
   override def sources = T.sources {
-    PathRef(millSourcePath / s"src") +:
-      ZincWorkerUtil.matchingVersions(millVersion).map { v =>
-        PathRef(millSourcePath / s"src-$v")
-      }
+    Seq(
+      PathRef(millSourcePath / s"src"),
+      PathRef(millSourcePath / s"src-$millPlatform"),
+    )
   }
 
   // It is arguably "cheating" not to declare all dependencies explicitly here,
   // but then we would have to deal with figuring out all the right dependency
   // versions for the given version of Mill.
-  val v = Versions.forMill(millVersion)
   def ivyDeps = Agg(
-    ivy"com.lihaoyi::mill-scalalib:${v.mill}",
-    ivy"org.scala-sbt::zinc-persist:${v.zinc}",
+    ivy"com.lihaoyi::mill-scalalib:${crossConfig.millVersion}",
+    ivy"org.scala-sbt::zinc-persist:${crossConfig.zincVersion}",
   )
 
   def publishVersion = "0.1.0"
@@ -66,4 +86,38 @@ class MillExplicitDepsModule(millVersion: String)
     ),
   )
 
+}
+
+val itestCrossMatrix = crossConfigs.values.toSeq.flatMap(_.itestCrossMatrix)
+
+object itest extends Cross[ItestCross](itestCrossMatrix: _*)
+class ItestCross(_millTestVersion: String, scalaTestVersion: String) extends MillIntegrationTestModule {
+
+  def millTestVersion = _millTestVersion
+  def pluginsUnderTest = Seq(`mill-explicit-deps`(millPlatform(_millTestVersion)))
+  def millSourcePath = millOuterCtx.millSourcePath
+
+  def testInvocations = Seq(
+    PathRef(millSourcePath) -> Seq(
+      TestInvocation.Targets(Seq("explicit.checkExplicitDeps")),
+      TestInvocation.Targets(Seq("undeclared.checkExplicitDeps"), 1),
+      TestInvocation.Targets(Seq("unimported.checkExplicitDeps"), 1),
+      TestInvocation.Targets(Seq("undeclaredIgnored.checkExplicitDeps")),
+    )
+  )
+
+  def generateSharedSources = T {
+    os.write(
+      T.dest / "testinfo.sc",
+      s"""|object TestInfo {
+          |  val scalaVersion = "$scalaTestVersion"
+          |}
+          |""".stripMargin,
+    )
+    PathRef(T.dest)
+  }
+
+  def perTestResources = T.sources {
+    Seq(generateSharedSources())
+  }
 }

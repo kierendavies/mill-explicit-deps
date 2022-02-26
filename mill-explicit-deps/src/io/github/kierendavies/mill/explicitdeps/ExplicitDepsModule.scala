@@ -14,6 +14,7 @@ import mill.T
 import mill.api.Result
 import mill.define.Command
 import mill.define.Target
+import mill.define.Task
 import mill.scalalib.CrossVersion
 import mill.scalalib.Dep
 import mill.scalalib.ScalaModule
@@ -23,44 +24,14 @@ import xsbti.VirtualFileRef
 
 trait ExplicitDepsModule extends ScalaModule with ExplicitDepsPlatform {
 
-  def declaredIvyDeps: Target[Agg[Dep]] = T {
-    ivyDeps() ++ compileIvyDeps()
-  }
-
-  // It's called resolved but it's actually the primary source which we will
-  // unresolve later.
-  def resolvedImportedIvyDeps: Target[Agg[PathRef]] = T {
-    val analysisFile = compile().analysisFile
-    T.log.debug(s"Reading imported dependencies from analysis file ${analysisFile}")
-
-    val analysis =
-      FileAnalysisStore
-        .binary(
-          analysisFile.toIO
-        )
-        .unsafeGet()
-        .getAnalysis()
-        .asInstanceOf[Analysis]
-    T.log.debug(analysis.toString)
-
-    Agg.from(
-      analysis.relations.allLibraryDeps
-        .filter(ref => ref.id().endsWith(".jar"))
-        .map { ref: VirtualFileRef =>
-          PathRef(os.Path(ref.id()), quick = true)
-        }
-    )
-  }
-
-  // Unresolve resolvedImportedIvyDeps.
-  def importedIvyDeps: Target[Agg[Dep]] = T {
+  def unresolveDeps(resolvedDeps: Task[Agg[PathRef]]): Task[Agg[Dep]] = T.task {
     val pomToDepF = pomToDep.tupled(scalaVersionsAndPlatform())
     val ivyXmlToDepF = ivyXmlToDep.tupled(scalaVersionsAndPlatform())
 
     def logFound(path: os.Path) = T.log.debug(s"Found module descriptor $path")
 
     val (errs: Seq[(PathRef, Seq[os.Path])], deps: Seq[Dep]) =
-      resolvedImportedIvyDeps().indexed.partitionMap { jar =>
+      resolvedDeps().indexed.partitionMap { jar =>
         lazy val pom = pomPath(jar.path)
         lazy val ivyXmlLocal = ivyXmlLocalPath(jar.path)
         lazy val ivyXmlCache = ivyXmlCachePath(jar.path)
@@ -96,6 +67,39 @@ trait ExplicitDepsModule extends ScalaModule with ExplicitDepsPlatform {
     } else {
       Result.Success(Agg.from(deps))
     }
+  }
+
+  def declaredIvyDeps: Target[Agg[Dep]] = T {
+    ivyDeps() ++ compileIvyDeps()
+  }
+
+  // It's called resolved but it's actually the primary source which we will
+  // unresolve later.
+  def resolvedImportedIvyDeps: Target[Agg[PathRef]] = T {
+    val analysisFile = compile().analysisFile
+    T.log.debug(s"Reading imported dependencies from analysis file ${analysisFile}")
+
+    val analysis =
+      FileAnalysisStore
+        .binary(
+          analysisFile.toIO
+        )
+        .unsafeGet()
+        .getAnalysis()
+        .asInstanceOf[Analysis]
+    T.log.debug(analysis.toString)
+
+    Agg.from(
+      analysis.relations.allLibraryDeps
+        .filter(ref => ref.id().endsWith(".jar"))
+        .map { ref: VirtualFileRef =>
+          PathRef(os.Path(ref.id()), quick = true)
+        }
+    )
+  }
+
+  def importedIvyDeps: Target[Agg[Dep]] = T {
+    unresolveDeps(resolvedImportedIvyDeps)()
   }
 
   def undeclaredIvyDeps: Target[Agg[Dep]] = T {
