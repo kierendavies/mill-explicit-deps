@@ -1,1 +1,7 @@
+# Mill
 /out/
+
+# Gitpod environment
+.bloop/
+.metals/
+.vscode/

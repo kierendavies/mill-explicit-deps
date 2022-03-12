@@ -1,0 +1,6 @@
+image:
+  file: .gitpod.Dockerfile
+tasks:
+  - init: |
+      mill --import ivy:com.lihaoyi::mill-contrib-bloop:  mill.contrib.bloop.Bloop/install
+      mill __.compile
