@@ -19,7 +19,7 @@ object foo extends ScalaModule with ExplicitDepsModule {
 }
 ```
 
-Then you can run the command `mill _.checkExplicitDeps`.
+Then you can run the command `mill -k __.checkExplicitDeps`.
 It will fail if it finds any transitive dependencies which are either
 - imported by a source file but not declared (in `ivyDeps` or `compileIvyDeps`), or
 - declared but not imported by any source files.
