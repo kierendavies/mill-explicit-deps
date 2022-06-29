@@ -8,7 +8,7 @@ It allows you to check that `ivyDeps` and `ivyCompileDeps` accurately reflect th
 
 Import the plugin in your `build.sc`:
 ```scala
-import $ivy.`io.github.kierendavies::mill-explicit-deps::0.1.0`
+import $ivy.`io.github.kierendavies::mill-explicit-deps::0.2.0`
 import io.github.kierendavies.mill.explicitdeps.ExplicitDepsModule
 ```
 
@@ -28,4 +28,4 @@ It will fail if it finds any transitive dependencies which are either
 
 This plugin requires Mill >=0.9.5 for Scala 2 modules and Mill >=0.9.7 for Scala 3 modules.
 
-It has been tested with Scala 2.12.15, 2.13.8, 3.0.2, and 3.1.1.
+It has been tested with Scala 2.13.8, 3.1.3, and 3.2.0-RC1.
