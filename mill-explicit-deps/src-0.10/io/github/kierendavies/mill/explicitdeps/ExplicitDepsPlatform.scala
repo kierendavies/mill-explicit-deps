@@ -8,10 +8,10 @@ import mill.moduledefs.Cacher
 import mill.scalalib.Dep
 import mill.scalalib.api.ZincWorkerUtil
 
-trait ExplicitDepsPlatform extends Cacher { this: ExplicitDepsModule =>
+private[explicitdeps] trait ExplicitDepsPlatform extends Cacher { this: ExplicitDepsModule =>
 
   // For convenient currying.
-  def scalaVersionsAndPlatform: Task[(String, String, String)] = T.task {
+  private[explicitdeps] def scalaVersionsAndPlatform: Task[(String, String, String)] = T.task {
     val scalaV = scalaVersion()
     val scalaBinV = ZincWorkerUtil.scalaBinaryVersion(scalaV)
     val platform = platformSuffix()
