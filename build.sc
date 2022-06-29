@@ -115,6 +115,7 @@ class ItestCross(_millTestVersion: String, scalaTestVersion: String) extends Mil
       TestInvocation.Targets(Seq("undeclared.checkExplicitDeps"), 1),
       TestInvocation.Targets(Seq("unimported.checkExplicitDeps"), 1),
       TestInvocation.Targets(Seq("undeclaredIgnored.checkExplicitDeps")),
+      TestInvocation.Targets(Seq("unimportedIgnored.checkExplicitDeps")),
     )
   )
 

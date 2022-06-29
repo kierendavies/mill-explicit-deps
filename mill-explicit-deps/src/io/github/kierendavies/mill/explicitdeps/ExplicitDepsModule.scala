@@ -102,6 +102,8 @@ trait ExplicitDepsModule extends ScalaModule with ExplicitDepsPlatform {
     unresolveDeps(resolvedImportedIvyDeps)()
   }
 
+  // ignoreUndeclaredIvyDeps is defined in ExplicitDepsPlatform
+
   def undeclaredIvyDeps: Target[Agg[Dep]] = T {
     val canonical = (DepC.apply _).tupled(scalaVersionsAndPlatform())
 
@@ -115,13 +117,18 @@ trait ExplicitDepsModule extends ScalaModule with ExplicitDepsPlatform {
     }
   }
 
+  def ignoreUnimportedIvyDeps: Task[Dep => Boolean] = T.task((_: Dep) => false)
+
   def unimportedIvyDeps: Target[Agg[Dep]] = T {
     val canonical = (DepC.apply _).tupled(scalaVersionsAndPlatform())
 
     val importedC = importedIvyDeps().map(canonical)
 
     declaredIvyDeps().filter { dep =>
-      !importedC.contains(canonical(dep))
+      if (ignoreUnimportedIvyDeps().apply(dep)) {
+        T.log.debug(s"Ignoring unimported dependency ${ivyDepDecl(dep)}")
+        false
+      } else !importedC.contains(canonical(dep))
     }
   }
 

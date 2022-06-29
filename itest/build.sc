@@ -41,3 +41,15 @@ object undeclaredIgnored extends ScalaModule with ExplicitDepsModule {
     super.ignoreUndeclaredIvyDeps().apply(dep) || dep.dep.module.name.value == "cats-kernel"
   }
 }
+
+object unimportedIgnored extends ScalaModule with ExplicitDepsModule {
+  def scalaVersion = TestInfo.scalaVersion
+  def millSourcePath = millOuterCtx.millSourcePath / "importFromCore"
+  def ivyDeps = Agg(
+    ivy"org.typelevel::cats-core:2.7.0",
+    ivy"org.typelevel::cats-kernel:2.7.0",
+  )
+  def ignoreUnimportedIvyDeps = T.task { dep: Dep =>
+    super.ignoreUndeclaredIvyDeps().apply(dep) || dep.dep.module.name.value == "cats-kernel"
+  }
+}
