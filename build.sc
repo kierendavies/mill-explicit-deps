@@ -22,8 +22,14 @@ trait CrossConfig {
   def zincVersion: String
 
   def scalaVersion: String = "2.13.8"
-  def millTestVersions: Seq[String] = Seq(millVersion)
-  def scalaTestVersions: Seq[String] = Seq("2.12.15", "2.13.8", "3.0.2", "3.1.1")
+  def millTestVersions: Seq[String] = {
+    val vs = millVersion match {
+      case SemVer(major, minor, patch, _) =>
+        (0 until patch.toInt).map(testPatch => s"$major.$minor.$testPatch")
+    }
+    vs :+ millVersion
+  }
+  def scalaTestVersions: Seq[String] = Seq("2.13.8", "3.1.3", "3.2.0-RC1")
   def itestCrossMatrix: Seq[(String, String)] = for {
     m <- millTestVersions
     s <- scalaTestVersions
@@ -32,8 +38,8 @@ trait CrossConfig {
 
 val crossConfigs = Seq(
   new CrossConfig {
-    def millVersion = "0.10.0"
-    def zincVersion = "1.5.9"
+    def millVersion = "0.10.4"
+    def zincVersion = "1.6.1"
   },
   new CrossConfig {
     // Mill <0.9.5 uses Zinc 1.4.0-M1 which fails to read the analysis file.
