@@ -38,7 +38,7 @@ trait CrossConfig {
 
 val crossConfigs = Seq(
   new CrossConfig {
-    def millVersion = "0.10.4"
+    def millVersion = "0.10.5"
     def zincVersion = "1.6.1"
   },
   new CrossConfig {
