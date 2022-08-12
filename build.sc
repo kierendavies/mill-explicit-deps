@@ -43,7 +43,7 @@ val crossConfigs = Seq(
   },
   new CrossConfig {
     // Mill <0.9.5 uses Zinc 1.4.0-M1 which fails to read the analysis file.
-    def millVersion = "0.9.5"
+    def millVersion = "0.9.12"
     def zincVersion = "1.4.4"
     override def millTestVersions = (5 to 12).map(patch => s"0.9.$patch")
     // Mill <0.9.7 doesn't resolve Scala 3 dependencies correctly.
