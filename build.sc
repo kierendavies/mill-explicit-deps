@@ -74,7 +74,7 @@ class MillExplicitDepsModule(millPlatform: String)
   def publishVersion = VcsVersion
     .vcsState()
     .format(
-      tagModifier = _.stripPrefix("v")
+      untaggedSuffix = "-SNAPSHOT"
     )
   def pomSettings = PomSettings(
     description = "Mill plugin for enforcing explicit dependencies",
