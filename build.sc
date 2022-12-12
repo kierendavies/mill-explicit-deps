@@ -39,7 +39,7 @@ trait CrossConfig {
 val crossConfigs = Seq(
   new CrossConfig {
     def millVersion = "0.10.4"
-    def zincVersion = "1.8.0"
+    def zincVersion = "1.6.1"
   },
   new CrossConfig {
     // Mill <0.9.5 uses Zinc 1.4.0-M1 which fails to read the analysis file.
