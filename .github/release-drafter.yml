@@ -1,0 +1,12 @@
+categories:
+  - title: Dependency updates
+    labels:
+      - dependency
+
+exclude-contributors:
+  - kierendavies
+
+template: |
+  ## Changes
+
+  $CHANGES

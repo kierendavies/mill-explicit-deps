@@ -1,6 +1,6 @@
-import $ivy.`de.tototec::de.tobiasroeser.mill.integrationtest::0.4.1-35-8464cc`
-import $ivy.`de.tototec::de.tobiasroeser.mill.vcs.version::0.1.4`
-import $ivy.`io.github.davidgregory084::mill-tpolecat::0.3.0`
+import $ivy.`de.tototec::de.tobiasroeser.mill.integrationtest::0.6.1`
+import $ivy.`de.tototec::de.tobiasroeser.mill.vcs.version::0.3.0`
+import $ivy.`io.github.davidgregory084::mill-tpolecat::0.3.1`
 
 import de.tobiasroeser.mill.integrationtest._
 import de.tobiasroeser.mill.vcs.version.VcsVersion
@@ -29,7 +29,7 @@ trait CrossConfig {
     }
     vs :+ millVersion
   }
-  def scalaTestVersions: Seq[String] = Seq("2.13.8", "3.1.3", "3.2.0-RC1")
+  def scalaTestVersions: Seq[String] = Seq("2.13.10", "3.2.1")
   def itestCrossMatrix: Seq[(String, String)] = for {
     m <- millTestVersions
     s <- scalaTestVersions
@@ -40,18 +40,7 @@ val crossConfigs = Seq(
   new CrossConfig {
     def millVersion = "0.10.4"
     def zincVersion = "1.6.1"
-  },
-  new CrossConfig {
-    // Mill <0.9.5 uses Zinc 1.4.0-M1 which fails to read the analysis file.
-    def millVersion = "0.9.5"
-    def zincVersion = "1.4.4"
-    override def millTestVersions = (5 to 12).map(patch => s"0.9.$patch")
-    // Mill <0.9.7 doesn't resolve Scala 3 dependencies correctly.
-    override def itestCrossMatrix = super.itestCrossMatrix.filter {
-      case (SemVer(_, _, patch, _), SemVer("3", _, _, _)) => patch.toInt >= 7
-      case _ => true
-    }
-  },
+  }
 ).map(c => millPlatform(c.millVersion) -> c).toMap
 
 val crossMillVersions = crossConfigs.keys.toSeq
@@ -85,7 +74,7 @@ class MillExplicitDepsModule(millPlatform: String)
   def publishVersion = VcsVersion
     .vcsState()
     .format(
-      tagModifier = _.stripPrefix("v")
+      untaggedSuffix = "-SNAPSHOT"
     )
   def pomSettings = PomSettings(
     description = "Mill plugin for enforcing explicit dependencies",

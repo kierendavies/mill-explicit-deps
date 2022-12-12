@@ -1,0 +1,21 @@
+pull_request_rules:
+  - name: Label dependency updates
+    conditions:
+      - author=scala-steward
+      - check-success=CI
+    actions:
+      label:
+        add:
+          - dependency
+  - name: Merge dependency updates
+    conditions:
+      - author=scala-steward
+      - check-success=build
+      - or:
+          - files=.mill-version
+          - files=.scalafmt.conf
+          - files=build.sc
+    actions:
+      delete_head_branch: {}
+      merge:
+        method: merge
