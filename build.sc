@@ -29,7 +29,7 @@ trait CrossConfig {
     }
     vs :+ millVersion
   }
-  def scalaTestVersions: Seq[String] = Seq("2.13.8", "3.1.3", "3.2.0-RC1")
+  def scalaTestVersions: Seq[String] = Seq("2.13.10", "3.2.1")
   def itestCrossMatrix: Seq[(String, String)] = for {
     m <- millTestVersions
     s <- scalaTestVersions
