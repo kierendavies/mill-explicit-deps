@@ -40,18 +40,7 @@ val crossConfigs = Seq(
   new CrossConfig {
     def millVersion = "0.10.4"
     def zincVersion = "1.6.1"
-  },
-  new CrossConfig {
-    // Mill <0.9.5 uses Zinc 1.4.0-M1 which fails to read the analysis file.
-    def millVersion = "0.9.5"
-    def zincVersion = "1.4.4"
-    override def millTestVersions = (5 to 12).map(patch => s"0.9.$patch")
-    // Mill <0.9.7 doesn't resolve Scala 3 dependencies correctly.
-    override def itestCrossMatrix = super.itestCrossMatrix.filter {
-      case (SemVer(_, _, patch, _), SemVer("3", _, _, _)) => patch.toInt >= 7
-      case _ => true
-    }
-  },
+  }
 ).map(c => millPlatform(c.millVersion) -> c).toMap
 
 val crossMillVersions = crossConfigs.keys.toSeq
