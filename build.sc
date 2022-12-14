@@ -38,7 +38,7 @@ trait CrossConfig {
 
 val crossConfigs = Seq(
   new CrossConfig {
-    def millVersion = "0.10.4"
+    def millVersion = "0.10.10"
     def zincVersion = "1.8.0"
   }
 ).map(c => millPlatform(c.millVersion) -> c).toMap
