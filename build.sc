@@ -21,7 +21,7 @@ trait CrossConfig {
   def millVersion: String
   def zincVersion: String
 
-  def scalaVersion: String = "2.13.8"
+  def scalaVersion: String = "2.13.10"
   def millTestVersions: Seq[String] = {
     val vs = millVersion match {
       case SemVer(major, minor, patch, _) =>
