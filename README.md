@@ -26,6 +26,6 @@ It will fail if it finds any transitive dependencies which are either
 
 ## Compatibility
 
-This plugin requires Mill >=0.9.5 for Scala 2 modules and Mill >=0.9.7 for Scala 3 modules.
+This plugin requires Mill 0.10.
 
-It has been tested with Scala 2.13.8, 3.1.3, and 3.2.0-RC1.
+It has been tested with Scala 2.13.10 and 3.2.1.
