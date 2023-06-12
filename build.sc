@@ -1,4 +1,4 @@
-import $ivy.`de.tototec::de.tobiasroeser.mill.integrationtest::0.7.0`
+import $ivy.`de.tototec::de.tobiasroeser.mill.integrationtest::0.7.1`
 import $ivy.`de.tototec::de.tobiasroeser.mill.vcs.version::0.3.1`
 import $ivy.`io.github.davidgregory084::mill-tpolecat::0.3.2`
 
