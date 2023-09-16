@@ -21,7 +21,7 @@ trait CrossConfig {
   def millVersion: String
   def zincVersion: String
 
-  def scalaVersion: String = "2.13.10"
+  def scalaVersion: String = "2.13.12"
   def millTestVersions: Seq[String] = {
     val vs = millVersion match {
       case SemVer(major, minor, patch, _) =>
@@ -29,7 +29,7 @@ trait CrossConfig {
     }
     vs :+ millVersion
   }
-  def scalaTestVersions: Seq[String] = Seq("2.13.10", "3.2.1")
+  def scalaTestVersions: Seq[String] = Seq("2.13.12", "3.2.1")
   def itestCrossMatrix: Seq[(String, String)] = for {
     m <- millTestVersions
     s <- scalaTestVersions
